@@ -1,5 +1,4 @@
 <?php
-namespace classphp;
 /**
  * Created by PhpStorm.
  * User: haier
@@ -22,6 +21,5 @@ class Json
         $this->retcode = $retcode;
         $this->retmsg = $retmsg;
         $this->retdata = $retdata;
-        print_r(json_encode($this));
     }
     }

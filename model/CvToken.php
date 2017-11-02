@@ -1,6 +1,5 @@
 <?php
-namespace classphp;
-use app\config;
+
 use Think\Exception;
 
 /**
@@ -9,8 +8,7 @@ use Think\Exception;
  * Date: 2017-8-18
  * Time: 23:23
  */
-
-class CvToken extends Token
+class CvToken extends classphp\Token
 {
     public $token;
     private $database;
@@ -18,10 +16,10 @@ class CvToken extends Token
     /**
      * CvToken constructor.
      */
-    public function __construct($token,$database)
+    public function __construct($token, $code = null, $database = null)
     {
-        parent::__construct($token);
-        $this->init($token,$database);
+       // parent::__construct($token);
+         $this->init($token, $code, $database);
     }
 
     /**
@@ -29,10 +27,11 @@ class CvToken extends Token
      * @param $token
      */
 
-    private function init($token,$database)
+    private function init($token, $code, $database)
     {
         $this->database = $database;
         $this->token = $token;
+        $this->token($code, $database);
     }
 //
 //    //中间件
@@ -48,36 +47,36 @@ class CvToken extends Token
 //    }
 
 
-
     /** 记录拿code请求的log
      * @param $code
      * @param $retcode
      * @param null $retmsg
      * @param $database
      */
-    private function tokenApiLog($code, $retcode, $retmsg,$agent,$table="cv_tokenlog")
+    private function tokenApiLog($code, $retcode, $retmsg, $agent, $table = "cv_tokenlog")
     {
-        $database=$this->database;
-        $ip=$this->getIP();
+        $database = $this->database;
+        $ip = $this->getIP();
         $insert = $database->insert($table, [
             "code" => $code,
             "retcode" => $retcode,
             "retmsg" => $retmsg,
-            "agent"=>$agent,
-            "ip"=>$ip,
+            "agent" => $agent,
+            "ip" => $ip,
             "time" => date("Y-m-d H:i:s", time()),
             "visible" => 1
         ]);
 //    var_dump($insert);
     }
 
-    private function token($code,$database){
+    private function token($code, $database)
+    {
         try {
             if (is_null($code) || $code == "" || $code == "undefined") {
-                $this->tokenApiLog(null,400, "code null",$database);
+                $this->tokenApiLog(null, 400, "code null", $database);
                 header('HTTP/1.1 400 Bad request');
                 throw new Exception('code null');
-            }else{
+            } else {
                 if (APPID == null || APPSECRET == null) {
                     $openid = md5($code);//临时测试方法
                 } else {
@@ -86,24 +85,24 @@ class CvToken extends Token
 
 
                 if ($openid == null) {
-                    $this->tokenApiLog($code, 500, "openid null",$database);
+                    $this->tokenApiLog($code, 500, "openid null", $database);
                     header('HTTP/1.1 500 Internal Server Error');
                     throw new Exception('openid null');
-                } else{
-                    $user_id =$this->userCheck($openid, $database);
+                } else {
+                    $user_id = $this->userCheck($openid, $database);
                     if (!is_null($code) || $code != "") {
-                        $token = createToken($user_id, $openid);
+                        $token = $this->createToken($user_id, $openid);
                         $retdata = new Token($token);
                         header('HTTP/1.1 200 OK');
-                        JsonPrint(200, null, $retdata);
                         $this->tokenApiLog($code, 200, null, $database);
+                        return new Json(200, null, $retdata);
                     }
                 }
 
 
-                }
+            }
 
-        }catch (Exception $e){
+        } catch (Exception $e) {
             //报错
             echo $e->getMessage();
         }
@@ -111,8 +110,8 @@ class CvToken extends Token
 
     private function userCheck($openid, $database)
     {
-        $user = new User();
-        $user_id = getUseridByOpenid($openid, $database);
+        $user = new CvUser();
+        $user_id = $user->getUseridByOpenid($openid, $database);
         if (is_null($user_id)) {
             $this->tokenApiLog("openid:" . $openid, 500, "user_id null", $database);
             header('HTTP/1.1 500 Internal Server Error');
@@ -134,15 +133,25 @@ class CvToken extends Token
         $access_token_array = json_decode($access_token_json, true);
         //var_dump($access_token_array);
         //$access_token = $access_token_array['access_token'];
-        return isset($access_token_array['openid'])?$access_token_array['openid']:null;
+        return isset($access_token_array['openid']) ? $access_token_array['openid'] : null;
     }
 
-    public function https_request($url, $data = null){
+    private function createToken($user_id, $openid)
+    {
+        $crypt = new ThinkCrypt();
+        这个子类还没定义
+        $str = $user_id . "+" . md5($openid)."+".date("Y-m-H d:i:s");
+        return $crypt->thinkEncrypt($str);
+    }
+
+
+    public function https_request($url, $data = null)
+    {
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
-        if (!empty($data)){
+        if (!empty($data)) {
             curl_setopt($curl, CURLOPT_POST, 1);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
         }
@@ -151,8 +160,10 @@ class CvToken extends Token
         curl_close($curl);
         return $output;
     }
+
     // Get the ip of client; 获取客户端的IP.
-    public function getIP(){
+    public function getIP()
+    {
         if (getenv("HTTP_CLIENT_IP") && strcasecmp(getenv("HTTP_CLIENT_IP"), "unknown"))
             $ip = getenv("HTTP_CLIENT_IP");
         else if (getenv("HTTP_X_FORWARDED_FOR") && strcasecmp(getenv("HTTP_X_FORWARDED_FOR"), "unknown"))
@@ -163,7 +174,7 @@ class CvToken extends Token
             $ip = $_SERVER['REMOTE_ADDR'];
         else
             $ip = "unknown";
-        return($ip);
+        return ($ip);
     }
 
 }

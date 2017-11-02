@@ -1,12 +1,11 @@
 <?php
-namespace classphp;
 /**
  * Created by PhpStorm.
  * User: haier
  * Date: 2017-11-2
  * Time: 0:30
  */
-class User{
+class CvUser{
 
     /**
      * 以openid换取user_id
@@ -27,7 +26,7 @@ class User{
             ]
         ]);
         if ($data == null) {
-            $user_id = getUseridByCreatingUser($database, $openid);
+            $user_id = $this->getUseridByCreatingUser($database, $openid);
             return $user_id;
         } else {
             foreach ($data as $d) {
@@ -49,7 +48,7 @@ class User{
      * @return int $user_id 用户id null 报错
      * @author Parry < yh@szer.me >
      */
-    function getUseridByCreatingUser($database, $openid,$table="cv_user")
+    private function getUseridByCreatingUser($database, $openid,$table="cv_user")
     {
 
         $insert_id = $database->insert($table, [

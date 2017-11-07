@@ -1,12 +1,13 @@
 <?php
-namespace classphp;
-/**
+
+/**与user表有关的一些操作
  * Created by PhpStorm.
  * User: haier
  * Date: 2017-11-2
  * Time: 0:30
  */
-class User{
+class CvUser
+{
 
     /**
      * 以openid换取user_id
@@ -15,7 +16,7 @@ class User{
      * @return int $user_id 用户id
      * @author Parry < yh@szer.me >
      */
-    function getUseridByOpenid($openid, $database,$table="cv_user")
+    public function getUseridByOpenid($openid, $database, $table = "cv_user")
     {
 
         $data = $database->select($table, [
@@ -24,10 +25,13 @@ class User{
         ], [
             "AND" => [
                 "openid" => $openid,
+                "visible" =>1
             ]
         ]);
+//        echo "getuserid";
+//        print_r($data);
         if ($data == null) {
-            $user_id = getUseridByCreatingUser($database, $openid);
+            $user_id = $this->getUseridByCreatingUser($database, $openid);
             return $user_id;
         } else {
             foreach ($data as $d) {
@@ -42,6 +46,30 @@ class User{
         }
     }
 
+
+    public function isVaildOpenid($openid, $database, $table = "cv_user")
+    {
+
+        $has = $database->has($table, [
+            "AND" => [
+                "openid" => $openid,
+                "visible" =>1
+            ]
+        ]);
+        return $has;
+    }
+    public function isDenyOpenid($openid, $database, $table = "cv_user")
+    {
+
+        $has = $database->has($table, [
+            "AND" => [
+                "openid" => $openid,
+                "visible[!]" =>1
+            ]
+        ]);
+        return $has;
+    }
+
     /**
      * 以openid 创建新用户 并返回user_id
      * @param object $database 数据库
@@ -49,7 +77,7 @@ class User{
      * @return int $user_id 用户id null 报错
      * @author Parry < yh@szer.me >
      */
-    function getUseridByCreatingUser($database, $openid,$table="cv_user")
+    private function getUseridByCreatingUser($database, $openid, $table = "cv_user")
     {
 
         $insert_id = $database->insert($table, [

@@ -41,8 +41,7 @@ class CvJSSDK
     {
         try {
             if (is_null($url)) {
-                $this->setStatus(400);
-                throw new Exception("url null");
+                throw new Exception("url null",400);
             } else {
                 //安全檢查过滤
                 $safeObj = new Safe($url);
@@ -50,9 +49,8 @@ class CvJSSDK
                     $url = $safeObj->getStr();
                 } else {
                     $url = null;
-                    $this->status = $safeObj->getStatus();
-                    $this->setStatus(400);
-                    throw new Exception($safeObj->getMsg());
+//                    $this->status = $safeObj->getStatus();
+                    throw new Exception($safeObj->getMsg(),$safeObj->getStatus());
                 }
 
                 //获取签名包
@@ -66,6 +64,7 @@ class CvJSSDK
 
             }
         } catch (Exception $e) {
+            $this->setStatus($e->getCode());
             echo $e->getMessage();
         }
 

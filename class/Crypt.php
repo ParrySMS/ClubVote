@@ -15,7 +15,7 @@ interface Crypt
     /*
      * 加密
      */
-    function decrypt($token, $database);
+    function ThinkDecrypt($token, $database);
     /*
      * 解密
      */

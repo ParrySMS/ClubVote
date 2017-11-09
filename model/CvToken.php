@@ -92,7 +92,7 @@ class CvToken extends classphp\Token
             //空检查
             if (is_null($code) || $code == "" || $code == "undefined") {
                 $this->tokenApiLog(null, 400, "code null");
-                throw new Exception('code null');
+                throw new Exception('code null',400);
             } else {
                 //非法参数安全检查
                 $safeObj = new Safe($code);
@@ -100,8 +100,7 @@ class CvToken extends classphp\Token
                     $code = $safeObj->getStr();
                 } else {
                     $code = null;
-                    $this->status = $safeObj->getStatus();
-                    throw new Exception($safeObj->getMsg());
+                    throw new Exception($safeObj->getMsg(),$safeObj->getStatus());
                 }
 
                 //获取openid
@@ -114,8 +113,8 @@ class CvToken extends classphp\Token
 
                 //openid 与解析userid检查
                 if ($openid == null) {
-                    $this->tokenApiLog($code, 500, "openid null");
-                    throw new Exception('openid null');
+                    $this->tokenApiLog($code, 401, "openid null");
+                    throw new Exception('openid null',401);
                 } else {
                     $user_id = $this->userCheck($openid, $database);
                     if (!is_null($user_id) || $user_id != "") {
@@ -132,12 +131,7 @@ class CvToken extends classphp\Token
 
         } catch (Exception $e) {
             //报错
-            if ($e->getMessage() == 'code null') {
-                //header('HTTP/1.1 400 Bad request');
-                $this->status = 400;
-            } elseif ($e->getMessage() == 'openid null') {
-                $this->status = 500;
-            }
+            $this->status = $e->getCode();
             echo $e->getMessage();
         }
     }
@@ -149,16 +143,17 @@ class CvToken extends classphp\Token
         try {
             if (is_null($user_id)) {
                 $this->tokenApiLog("openid:" . $openid, 500, "user_id null");
-                $this->status = 500;
-                throw new Exception('user_id null');
+//                $this->status = 500;
+                throw new Exception('user_id null',500);
             } elseif ($user_id == -1) {
                 $this->tokenApiLog("openid:" . $openid, 403, "access deny");
-                $this->status = 403;
-                throw new Exception("access deny");
+//                $this->status = 403;
+                throw new Exception("access deny",403);
             }
             return $user_id;
         } catch (Exception $e) {
             //报错
+            $this->status = $e->getCode();
             echo $e->getMessage();
         }
     }

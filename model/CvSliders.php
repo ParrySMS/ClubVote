@@ -12,6 +12,14 @@ class CvSliders
     private $status = 200;
 
     /**
+     * @return int
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
      * CvSliders constructor.
      * @param $database
      */
@@ -35,46 +43,23 @@ class CvSliders
     private function sliders($token)
     {
         try {
-            //空检查
-            if (is_null($token) || $token == "" || $token == "undefined") {
-                $this->status = 400;
-                throw new Exception('token null');
-            } else {
-                //非法参数安全检查
-                $safeObj = new Safe($token);
-                if ($safeObj->getStatus() == 200) {
-                    $token = $safeObj->getStr();
-                } else {
-                    $token = null;
-                    $this->status = $safeObj->getStatus();
-                    throw new Exception($safeObj->getMsg());
-                }
-                //token检验
-                $crypt = new classphp\ThinkCrypt();
-                $userObj = new CvUser();
-                //token解密成openid
-                $openid = $crypt->tokenDecrypt($token, $this->database);
-                if ($openid === null) {
-                    $this->status = 400;
-                    throw new Exception('token invalid 01');
-                }
+            //调用TokenCheckPoint 检查token
+                $token = new TokenCheckPoint($token,$this->database);
 
-                $deny =$userObj->isDenyOpenid($openid,$this->database);
-                if($deny){
-                    $this->status = 403;
-                    throw new Exception('access deny');
+                // 获取图片对象
+                $slidersPic =array(SLIDER_PIC1,SLIDER_PIC2,SLIDER_PIC3,SLIDER_PIC4,SLIDER_PIC5);
+                $slidersLoc =array(SLIDER_LOC1,SLIDER_LOC2,SLIDER_LOC3,SLIDER_LOC4,SLIDER_LOC5);
+                $sliders = array();
+                for($i=0;$i<SLIDER_NUM;$i++){
+                    $slider = new classphp\Pic($slidersPic[$i],$slidersLoc[$i]);
+                    $sliders[] =$slider;
                 }
+                $retdata =new classphp\Sliders($sliders);
+                //var_dump($retdata);
+                return new classphp\Json($retdata);
 
-                $vaild =$userObj->isVaildOpenid($openid,$this->database);
-                if(!$vaild){
-                    $this->status = 400;
-                    throw new Exception('token to invalid 02');
-                }
-                //Todo: 获取图片对象
-
-
-            }
         } catch (Exception $e) {
+            $this->status = $e->getCode();
             echo $e->getMessage();
         }
     }

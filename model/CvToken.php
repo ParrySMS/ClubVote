@@ -113,8 +113,8 @@ class CvToken extends classphp\Token
 
                 //openid 与解析userid检查
                 if ($openid == null) {
-                    $this->tokenApiLog($code, 401, "openid null");
-                    throw new Exception('openid null',401);
+                    $this->tokenApiLog($code, 401, "openid unauthorized");
+                    throw new Exception('openid unauthorized',401);
                 } else {
                     $user_id = $this->userCheck($openid, $database);
                     if (!is_null($user_id) || $user_id != "") {

@@ -1,13 +1,12 @@
 <?php
 
 /**
- * 搜索功能
  * Created by PhpStorm.
  * User: haier
- * Date: 2017-11-8
- * Time: 16:42
+ * Date: 2017-11-10
+ * Time: 15:13
  */
-class CvSearch
+class CvClubDetails
 {
     private $database;
     private $status = 200;
@@ -21,32 +20,33 @@ class CvSearch
     }
 
 
-    public function __construct($content, $token, $database)
+    public function __construct($id, $token, $database)
     {
         $this->database = $database;
-        $this->init($content, $token);
+        $this->init($id, $token);
     }
 
-    private function init($content, $token)
+    private function init($id, $token)
     {
-        $json = $this->search($content, $token);
+        $json = $this->clubDetails($id, $token);
         if (!is_null($json)) {
             print_r(json_encode($json));
         }
     }
 
-    private function search($content, $token)
+    private function clubDetails($id, $token)
     {
         try {
-            //执行token检查
             $token = new TokenCheckPoint($token, $this->database);
-            //对club表进行搜索
             $cvClub = new CvClub();
-            $clubObjs = $cvClub->search($content, $this->database);
-            //封装
-            $retdata = new classphp\Clubs($clubObjs);
-            //var_dump($retdata);
-            return new classphp\Json($retdata);
+            unset($clubBase);
+            //base 包含 id school club fav_num info photo
+            //返回 字串关联数组
+            $clubBase = $cvClub->getBaseDetails($id, $this->database);
+            $rankAll = $cvClub->getRankAll($id, $this->database);
+            //todo: 求rankSch 还有 点赞头像 底部图
+            return null;
+
         } catch (Exception $e) {
             $this->status = $e->getCode();
             echo $e->getMessage();

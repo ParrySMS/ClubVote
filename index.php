@@ -4,6 +4,9 @@ require 'vendor/autoload.php';
 
 require 'class/Crypt.php';
 require 'class/Pic.php';
+require 'class/Club.php';
+require 'class/ClubDetails.php';
+require 'class/Clubs.php';
 require 'class/Token.class.php';
 require 'class/JsRetdata.class.php';
 require 'class/Json.php';
@@ -17,6 +20,7 @@ require 'model/CvToken.php';
 require 'model/CvSliders.php';
 require 'model/CvSearch.php';
 require 'model/CvJSSDK.php';
+require 'model/CvClubDetails.php';
 require 'model/Safe.php';
 require 'model/TokenCheckPoint.php';
 
@@ -37,6 +41,8 @@ $config = [
 
 $app = new \Slim\App($config);
 
+//todo: 增加路由组 用header获取 toekn 用路由组统一校验token
+
 /*
  * get 请求
  */
@@ -46,7 +52,7 @@ $app = new \Slim\App($config);
 $app->get('/pic/sliders/{token}', function ($request, $response) {
     $route = $request->getAttribute('route');
     $token = null;
-    if ($route->getArgument('token')!==null) {
+    if ($route->getArgument('token') !== null) {
         $token = $route->getArgument('token');
     }
     $database = new Medoo(array("database_name" => DATABASE_NAME));
@@ -60,17 +66,29 @@ $app->get('/search/{content}/{token}', function ($request, $response) {
     $route = $request->getAttribute('route');
     $content = null;
     $token = null;
-    if ($route->getArgument('token')!==null) {
+    if ($route->getArgument('token') !== null) {
         $token = $route->getArgument('token');
     }
-    if ($route->getArgument('content')!==null) {
+    if ($route->getArgument('content') !== null) {
         $content = $route->getArgument('content');
     }
     $database = new Medoo(array("database_name" => DATABASE_NAME));
-    $CvSearch = new CvSearch($content,$token,$database);
-
-    return $response->withStatus(200);
+    $CvSearch = new CvSearch($content, $token, $database);
+    return $response->withStatus($CvSearch->getStatus());
 });
+
+//获取社团详情页（信息+点赞头像+底部图）
+$app->get('/clubs/{id}/{token}', function ($request, $response) {
+    $route = $request->getAttribute('route');
+    $token = ($route->getArgument('token') !== null) ? $route->getArgument('token') : null;
+    $id = ($route->getArgument('id') !== null) ? $route->getArgument('id') : null;
+
+    $database = new Medoo(array("database_name" => DATABASE_NAME));
+    $cvClubDetails = new CvClubDetails($id,$token,$database);
+    return $response->withStatus($cvClubDetails->getStatus());
+
+});
+
 
 /*
  * post 请求

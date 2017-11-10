@@ -39,7 +39,7 @@ class TokenCheckPoint
             //token解密成openid
             $tokenAr = $crypt->tokenDecrypt($token, $this->database);
             if (!is_array($tokenAr) || sizeof($tokenAr) == 0) {
-                throw new Exception('token invalid 01', 400);
+                throw new Exception('token invalid 01', 406);
             }
             $openid = $tokenAr["openid"];
             $user_id = $tokenAr["user_id"];
@@ -52,7 +52,7 @@ class TokenCheckPoint
             //openid 和userid 匹配
             $match = $userObj->isMatchUidOid($user_id, $openid, $this->database);
             if (!$match) {
-                throw new Exception('token to invalid 03', 400);
+                throw new Exception('token to invalid 02', 406);
             }
 
             return $token;

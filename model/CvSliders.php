@@ -51,7 +51,7 @@ class CvSliders
                 $slidersLoc =array(SLIDER_LOC1,SLIDER_LOC2,SLIDER_LOC3,SLIDER_LOC4,SLIDER_LOC5);
                 $sliders = array();
                 for($i=0;$i<SLIDER_NUM;$i++){
-                    $slider = new classphp\Pic($slidersPic[$i],$slidersLoc[$i]);
+                    $slider = new classphp\Image($slidersPic[$i],$slidersLoc[$i]);
                     $sliders[] =$slider;
                 }
                 $retdata =new classphp\Sliders($sliders);

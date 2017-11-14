@@ -6,8 +6,38 @@
  * Date: 2017-11-2
  * Time: 0:30
  */
+
+namespace classphp;
+use Think\Exception;
+
 class CvUser
 {
+
+    /** 获取用户unionid
+     * @param $user_id
+     * @param $database
+     * @param string $table
+     * @return mixed
+     * @throws Exception
+     */
+    public function getUnionidByUserid($user_id, $database, $table = "cv_user")
+    {
+        $data = $database->select($table, [
+            "unionid"
+        ], [
+            "AND" => [
+                "id" => $user_id,
+                "visible" => 1
+            ]
+        ]);
+        if(!is_array($data)||sizeof($data)!=1){
+            throw new Exception("get unionid error",500);
+        }
+        foreach ($data as $d){
+            return $d["unionid"];
+        }
+
+    }
 
     /**
      * 以openid换取user_id
@@ -87,14 +117,14 @@ class CvUser
     public function getUseridByCreatingUser($info, $database, $table = "cv_user")
     {
         if (!is_array($info)) {
-            throw new Exception("creating user error", 500);
+            throw new Exception("type of info error in creating user", 500);
         } else {
 
             $insert_id = $database->insert($table, [
                 "openid" => $info["openid"],
                 "nickname" => $info["nickname"],
                 "sex" => $info["sex"],
-                "country"=>$info["country"],
+                "country" => $info["country"],
                 "province" => $info["province"],
                 "city" => $info["city"],
                 "icon" => $info["headimgurl"],
@@ -102,6 +132,7 @@ class CvUser
                 "time" => date("Y-m-d H:i:s"),
                 "visible" => 1
             ]);
+
             if (is_numeric($insert_id) && $insert_id != 0) {
                 return $insert_id;
             } else {
@@ -110,9 +141,17 @@ class CvUser
         }
     }
 
-
+    /**判断userid和openid是否匹配
+     * @param $user_id
+     * @param $openid
+     * @param $database
+     * @param string $table
+     * @return mixed
+     */
     public function isMatchUidOid($user_id, $openid, $database, $table = "cv_user")
     {
+        //test
+        // echo "$user_id###$openid";
         $has = $database->has($table, [
             "AND" => [
                 "id" => $user_id,
@@ -123,5 +162,6 @@ class CvUser
         return $has;
 
     }
+
 
 }

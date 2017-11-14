@@ -41,7 +41,7 @@ class CvSearch
             //执行token检查
             $token = new TokenCheckPoint($token, $this->database);
             //对club表进行搜索
-            $cvClub = new CvClub();
+            $cvClub = new classphp\CvClub();
             $clubObjs = $cvClub->search($content, $this->database);
             //封装
             $retdata = new classphp\Clubs($clubObjs);

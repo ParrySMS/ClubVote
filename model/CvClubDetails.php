@@ -38,8 +38,8 @@ class CvClubDetails
     {
         try {
             $token = new TokenCheckPoint($token, $this->database);
-            $cvClub = new CvClub();
-            $cvBottom = new CvBottomPic();
+            $cvClub = new classphp\CvClub();
+            $cvBottom = new classphp\CvBottomPic();
             unset($clubBase);
             //base 包含 school club fav_num info photo
             //返回 字串关联数组clubBase
@@ -51,14 +51,18 @@ class CvClubDetails
             $fav_num = $clubBase["fav_num"];
             $info = $clubBase["info"];
 
-            $rankAll = $cvClub->getRankAll($id, $this->database);
+            $totalRank = $cvClub->getRankAll($id, $this->database);
 
-            $rankSch = $cvClub->getRankSch($id, $school, $this->database);
-            $bottom = $cvBottom->getBottomObjs($school, $this->database);
+            $schRank = $cvClub->getRankSch($id, $school, $this->database);
+            unset($avatars,$sponsors);
+            $sponsors = $cvBottom->getBottomObjs($school, $this->database);
             //todo:  点赞头像(需要点赞记录表)
-            $icons = array();
+            $avatars = array();
 
-            $clubDerails = new \classphp\ClubDetails($id, $school, $club, $photo, $fav_num, $info, $rankSch, $rankAll, $icons, $bottom);
+//            $sponsors =array($sponsorGZH,$sponsorOne);
+
+            //$id, $school, $club, $photo,$fav_num,$schRank, $totalRank, $desc, array $avatars, $sponsors
+            $clubDerails = new \classphp\ClubDetails($id, $school, $club, $photo, $fav_num, $schRank, $totalRank,$info, $avatars, $sponsors);
             $retdata = new \classphp\Json($clubDerails);
             return $retdata;
 

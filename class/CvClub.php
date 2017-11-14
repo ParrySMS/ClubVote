@@ -7,8 +7,33 @@
  * Date: 2017-11-9
  * Time: 23:25
  */
+
+namespace classphp;
 class CvClub
 {
+
+    /** 对club表的票数数据进行更新
+     * @param $club_id
+     * @param $database
+     * @param string $table
+     *
+     */
+    public function voteUpdate($club_id,$database, $table = "cv_club")
+    {
+        $affected = $database->update($table,[
+            "fav_num[+]"=>1
+        ],[
+            "AND"=>[
+                "id"=>$club_id,
+                "visible"=>1
+            ]
+        ]);
+        if(!is_numeric($affected)||$affected!=1){
+            throw new Exception("fav_num update error",500);
+        }
+    }
+
+
     /** 搜索内容
      * @param $content
      * @param $database
@@ -20,7 +45,8 @@ class CvClub
             "id",
             "school",
             "club",
-            "photo"
+            "photo",
+            "fav_num"
         ], [
             "AND" => [
                 "OR" => [
@@ -45,7 +71,8 @@ class CvClub
                 $school = $d["school"];
                 $club = $d["club"];
                 $photo = $d["photo"];
-                $clubObj = new \classphp\Club($id, $school, $club, $photo);
+                $fav_num = $d["fav_num"];
+                $clubObj = new \classphp\Club($id, $school, $club, $photo, $fav_num);
                 $clubObjs[] = $clubObj;
             }
             return $clubObjs;
@@ -129,7 +156,7 @@ class CvClub
             "fav_num"
         ], [
             "AND" => [
-                "school"=>$school,
+                "school" => $school,
                 "visible" => 1
             ],
             "ORDER" => [

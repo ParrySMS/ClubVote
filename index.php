@@ -4,7 +4,7 @@ require 'vendor/autoload.php';
 
 require 'class/Crypt.php';
 require 'class/CvBottomPic.php';
-require 'class/Pic.php';
+require 'class/Image.php';
 require 'class/Club.php';
 require 'class/ClubDetails.php';
 require 'class/Clubs.php';
@@ -25,7 +25,6 @@ require 'model/CvClubDetails.php';
 require 'model/Safe.php';
 require 'model/TokenCheckPoint.php';
 
-
 require 'config/key.php';
 require 'config/pic.php';
 require 'config/wxApp.php';
@@ -42,14 +41,17 @@ $config = [
 
 $app = new \Slim\App($config);
 
+//todo: 进行投票行为记录 获取记录表 拿头像给回details
+
+//todo:鉴权 限制投票 时间 关注
+//todo:首页的分页
 
 /*
  * get 请求
  */
 
-
 //获取轮播图
-$app->get('/pic/sliders/', function ($request, $response) {
+$app->get('/pic/sliders', function ($request, $response) {
     if (!$request->hasHeader('cookie') || !isset($_COOKIE['token'])) {
         return $response->withStatus(412)->write('Precondition Failed');
     } else {
@@ -61,13 +63,13 @@ $app->get('/pic/sliders/', function ($request, $response) {
 });
 
 //搜索
-$app->get('/search/{content}/', function ($request, $response) {
+$app->get('/search', function ($request, $response) {
     if (!$request->hasHeader('cookie') || !isset($_COOKIE['token'])) {
         return $response->withStatus(412)->write('Precondition Failed');
     } else {
         $token = $_COOKIE['token'];
-        $route = $request->getAttribute('route');
-        $content = ($route->getArgument('content') !== null) ? $route->getArgument('content') : null;
+
+        $content = isset($request->getQueryParams()["content"]) ? $request->getQueryParams()["content"] : null;
     }
     $database = new Medoo(array("database_name" => DATABASE_NAME));
     $CvSearch = new CvSearch($content, $token, $database);
@@ -77,9 +79,8 @@ $app->get('/search/{content}/', function ($request, $response) {
 
 //社团相关路由组
 $app->group('/clubs', function () {
-
     //获取社团详情页（信息+点赞头像+底部图）
-    $this->get('/{id}/', function ($request, $response) {
+    $this->get('/{id}', function ($request, $response) {
         if (!$request->hasHeader('cookie') || !isset($_COOKIE['token'])) {
             return $response->withStatus(412)->write('Precondition Failed');
         } else {
@@ -101,19 +102,20 @@ $app->group('/clubs', function () {
  */
 
 //创建token
-$app->post('/token/', function ($request, $response, $args) {
+$app->post('/token', function ($request, $response, $args) {
+
     $code = null;
     if (isset($request->getParsedBody()["code"])) {
         $code = $request->getParsedBody()["code"];
     }
     $database = new Medoo(array("database_name" => DATABASE_NAME));
     $cvToken = new CvToken($code, $database);
-    return $response->withAddedHeader('set-cookies', "token=$cvToken->token")->withStatus($cvToken->getStatus());
+    setcookie("token", $cvToken->token,EXPIRES);
+    return $response->withStatus($cvToken->getStatus());
 });
 
-
 //创建jssdk签名
-$app->post('/sign/', function ($request, $response, $args) {
+$app->post('/sign', function ($request, $response, $args) {
     $url = null;
     if (isset($request->getParsedBody()["url"])) {
         $url = $request->getParsedBody()["url"];
@@ -122,5 +124,6 @@ $app->post('/sign/', function ($request, $response, $args) {
     $cvJssdk = new CvJSSDK($url);
     return $response->withStatus($cvJssdk->getStatus());
 });
+
 
 $app->run();

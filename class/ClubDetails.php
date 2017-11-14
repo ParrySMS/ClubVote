@@ -11,47 +11,31 @@ namespace classphp;
 
 class ClubDetails extends Club
 {
-    public $rankSch;
-    public $rankAll;
-    public $info;
+    public $schRank;
+    public $totalRank;
+    public $desc;
     //头像
-    public $icons = array();
-    public $fav_num;
+    public $avatars = array();
     //底部图
-    public $bottom;
+    public $sponsors;
 
     /**
      * ClubDetails constructor.
-     * @param $id
-     * @param $school
-     * @param $club
-     * @param $photo
-     * @param null $fav_num
-     * @param null $info
-     * @param $rankSch
-     * @param $rankAll
-     * @param array $icons
-     * @param array $bottom
+     * @param $schRank
+     * @param $totalRank
+     * @param $desc
+     * @param array $avatars
+     * @param $fav_num
+     * @param $sponsors
      */
-    public function __construct($id, $school, $club, $photo, $fav_num, $info, $rankSch, $rankAll, array $icons, $bottom)
+    public function __construct($id, $school, $club, $photo,$fav_num,$schRank, $totalRank, $desc, array $avatars, $sponsors)
     {
-        parent::__construct($id, $school, $club, $photo, $fav_num, $info);
-        $this->fav_num = $fav_num;
-        $this->info = $info;
-        $this->rankSch = $rankSch;
-        $this->rankAll = $rankAll;
-        $this->icons = $icons;
-        $this->bottom = $bottom;
-    }
-
-    /**
-     * @param mixed $rankAll
-     * @return ClubDetails
-     */
-    public function setRankAll($rankAll)
-    {
-        $this->rankAll = $rankAll;
-        return $this;
+        parent::__construct($id, $school, $club, $photo,$fav_num);
+        $this->schRank = $schRank;
+        $this->totalRank = $totalRank;
+        $this->desc = $desc;
+        $this->avatars = $avatars;
+        $this->sponsors = $sponsors;
     }
 
 

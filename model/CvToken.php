@@ -107,8 +107,13 @@ class CvToken extends classphp\Token
 
                 //获取openid
 
-                if (APPID == null || APPSECRET == null) {
-                    $openid = md5($code);//临时测试方法
+                if (empty(APPID) || empty(APPSECRET)) {
+                    $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                    $str = "";
+                    for ($i = 0; $i < 8; $i++) {
+                        $str .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
+                    }
+                    $openid = $str;//生产随机字符串做临时测试方法
                 } else {
                     $openid = $this->getOpenidByCode($code);
                 }
@@ -146,16 +151,16 @@ class CvToken extends classphp\Token
      */
     private function userCheck($openid, $database)
     {
-        $user = new CvUser();
-        $user_id = $user->getUseridByOpenid($openid, $database);
-        if (is_null($user_id)) {
-            //新用户 数据库里没数据 拉取信息入库
-            //返回一个信息包 关联数组
-            $info =$this->getUserInfo($this->access_token, $openid);
-
-            $user_id = $user->getUseridByCreatingUser($info,$database);
-        }
         try {
+            $user = new classphp\CvUser();
+            $user_id = $user->getUseridByOpenid($openid, $database);
+            if (is_null($user_id)) {
+                //新用户 数据库里没数据 拉取信息入库
+                //返回一个信息包 关联数组
+                $info = $this->getUserInfo($this->access_token, $openid);
+                $user_id = $user->getUseridByCreatingUser($info, $database);
+            }
+
             if (is_null($user_id)) {
                 $this->tokenApiLog("openid:" . $openid, 500, "user_id null");
 //                $this->status = 500;
@@ -180,7 +185,8 @@ class CvToken extends classphp\Token
      * @param string $appsecret
      * @return null
      */
-    private function getOpenidByCode($code, $appid = APPID, $appsecret = APPSECRET)
+    private
+    function getOpenidByCode($code, $appid = APPID, $appsecret = APPSECRET)
     {
         //appid 和 appsecret在配置文件中
         //根据code获得Access Token 与 openid
@@ -188,11 +194,14 @@ class CvToken extends classphp\Token
         $access_token_json = $this->https_request($access_token_url);
         $access_token_array = json_decode($access_token_json, true);
         //var_dump($access_token_array);
-        if (isset($access_token_array['openid'])) {
+        if (!isset($access_token_array['openid'])) {
+            $errmsg =$access_token_array['errmsg'];
+            throw new Exception("openid unauthorized: $errmsg",401);
+        }
             $this->openid = $access_token_array['openid'];
             $this->access_token = $access_token_array['access_token'];
             $this->refresh_token = $access_token_array['refresh_token'];
-        }
+
         return isset($access_token_array['openid']) ? $access_token_array['openid'] : null;
     }
 
@@ -201,19 +210,35 @@ class CvToken extends classphp\Token
      * @param $openid
      * @return $userInfoArray 用户信息的关联数组包
      */
-    private function getUserInfo($access_token, $openid)
+    private
+    function getUserInfo($access_token, $openid)
     {
-        $access_token = $this->accessTokenCheck($access_token, $openid);
-        $url = "https://api.weixin.qq.com/sns/userinfo?access_token=$access_token&openid=$openid&lang=zh_CN";
-        $userInfoArray = json_decode($this->https_request($url),true);
-        //var_dump($userInfoArray);
-        if (isset($userInfoArray["openid"])) {
-            return $userInfoArray;
-        }else{
-            $this->tokenApiLog(null,500,"getInfo error");
-            throw new Exception("getInfo error",500);
-        }
+        if (empty(APPID) || empty(APPSECRET)) {
+            //测试模式
+            $info = array();
+            $info["openid"] = $openid;
+            $info["nickname"] = "test";
+            $info["sex"] = "test";
+            $info["country"] = "test";
+            $info["province"] = "test";
+            $info["city"] = "test";
+            $info["headimgurl"] = "test";
+            $info["unionid"] = "test";
+            return $info;
 
+        }else {
+            $access_token = $this->accessTokenCheck($access_token, $openid);
+            $url = "https://api.weixin.qq.com/sns/userinfo?access_token=$access_token&openid=$openid&lang=zh_CN";
+            $userInfoArray = json_decode($this->https_request($url), true);
+            //var_dump($userInfoArray);
+            if (!isset($userInfoArray["openid"])) {
+                $errmsg = $userInfoArray['errmsg'];
+                $this->tokenApiLog(null, 500, "getInfo error:$errmsg");
+                throw new Exception("getInfo error:$errmsg", 500);
+            }
+            return $userInfoArray;
+
+        }
     }
 
     /** 检查更新 返回有效的最新的$access_token
@@ -221,14 +246,15 @@ class CvToken extends classphp\Token
      * @param $openid
      * @return mixed
      */
-    private function accessTokenCheck($access_token, $openid)
+    private
+    function accessTokenCheck($access_token, $openid)
     {
         $checkUrl = "https://api.weixin.qq.com/sns/auth?access_token=$access_token&openid=$openid";
         $check_json = $this->https_request($checkUrl);
         $check_array = json_decode($check_json, true);
         if ($check_array["errcode"] != 0) {
-           $access_token =$this->accessTokenRefresh($this->refresh_token);
-           return $access_token;
+            $access_token = $this->accessTokenRefresh($this->refresh_token);
+            return $access_token;
         } else {
             return $access_token;
         }
@@ -240,7 +266,8 @@ class CvToken extends classphp\Token
      * @return mixed
      * @throws Exception
      */
-    private function accessTokenRefresh($refresh_token, $appid = APPID)
+    private
+    function accessTokenRefresh($refresh_token, $appid = APPID)
     {
         $refreshUrl = "https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=$appid&grant_type=refresh_token&refresh_token=$refresh_token";
         $refresh_json = $this->https_request($refreshUrl);
@@ -256,7 +283,8 @@ class CvToken extends classphp\Token
     }
 
 
-    private function createToken($user_id, $openid)
+    private
+    function createToken($user_id, $openid)
     {
         $crypt = new ThinkCrypt();
         //$str = $user_id . "+" . md5($openid) . "+" . date("Y-m-H d:i:s");
@@ -265,7 +293,8 @@ class CvToken extends classphp\Token
     }
 
 
-    public function https_request($url, $data = null)
+    public
+    function https_request($url, $data = null)
     {
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url);

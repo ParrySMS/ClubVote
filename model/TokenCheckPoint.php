@@ -49,7 +49,7 @@ class TokenCheckPoint
             }
             //token检验
             $crypt = new classphp\ThinkCrypt();
-            $userObj = new CvUser();
+            $userObj = new classphp\CvUser();
             //token解密成openid
             $tokenAr = $crypt->tokenDecrypt($token, $this->database);
             if (!is_array($tokenAr) || sizeof($tokenAr) == 0) {

@@ -21,9 +21,11 @@ class ThinkCrypt implements Crypt
      * @return string
      * @author 麦当苗儿 <zuojiazi@vip.qq.com>
      */
-    function encrypt($data, $key = '', $expire = 0)
+    function encrypt($data, $key = '', $expire = 0,$withNonstr = 1)
     {
-        $data=$data."+".NONSTR;
+        if($withNonstr == 1) {
+            $data = $data . "+" . NONSTR;
+        }
         $key = md5(empty($key) ? DATA_AUTH_KEY : $key);
         $data = base64_encode($data);
         $x = 0;

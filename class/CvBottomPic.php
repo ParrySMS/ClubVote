@@ -34,6 +34,7 @@ class CvBottomPic
      * @return array
      * @throws Exception
      */
+    //todo:补充商家的图片链接到数据库
     public function getBottomObjs($school, $database, $table = "cv_bottompic")
     {
         $data = $database->select($table, [

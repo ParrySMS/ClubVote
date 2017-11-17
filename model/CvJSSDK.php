@@ -44,15 +44,16 @@ class CvJSSDK
             if (is_null($url)) {
                 throw new Exception("url null", 400);
             } else {
-                //安全檢查过滤
-                $safeObj = new Safe($url);
-                if ($safeObj->getStatus() == 200) {
-                    $url = $safeObj->getStr();
-                } else {
-                    $url = null;
-//                    $this->status = $safeObj->getStatus();
-                    throw new Exception($safeObj->getMsg(), $safeObj->getStatus());
-                }
+                //安全檢查过滤 不需要 因为不经过数据库
+//                $safeObj = new Safe($url);
+//                if ($safeObj->getStatus() == 200) {
+//                    $url = $safeObj->getStr();
+//                } else {
+//                    $url = null;
+////                    $this->status = $safeObj->getStatus();
+//                    throw new Exception($safeObj->getMsg(), $safeObj->getStatus());
+//                }
+//
 
                 //获取签名包
                 $signPackage = $this->getSignPackage($url);

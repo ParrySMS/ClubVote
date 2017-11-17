@@ -11,6 +11,70 @@
 namespace classphp;
 class CvClub
 {
+    /**根据id数组 返回club对象数组
+     * @param array $ids
+     * @param $database
+     * @param string $table
+     * @return array
+     */
+    public function getClubsByIds(array $ids, $database, $table = "cv_club")
+    {
+        //遍历数组获取club
+        $data = $database->select($table, [
+            "id",
+            "school",
+            "club",
+            "photo",
+            "fav_num"
+        ], [
+            "AND" => [
+                "id" => $ids,
+                "visible" => 1
+            ]
+        ]);
+        if (!is_array($data) || sizeof($data) == 0) {
+            throw new \Exception("getClubByIds DB error", 500);
+        }
+        unset($clubs);
+        $clubs = array();
+        foreach ($data as $d) {
+            $id = $d['id'];
+            $school = $d["school"];
+            $name = $d["club"];
+            $photo = $d["photo"];
+            $fav_num = $d["fav_num"];
+            $club = new Club($id, $school, $name, $photo, $fav_num);
+            $clubs[] = $club;
+        }
+        shuffle($clubs);
+        return $clubs;
+
+
+    }
+
+    /**获取全部的club id 用于后续做ids用
+     * @param $database
+     * @param string $table
+     * @return array
+     */
+    public function getAllCid($database, $table = "cv_club")
+    {
+        $data = $database->select($table, [
+            "id"
+        ], [
+            "visible" => 1
+        ]);
+        if (!is_array($data) || sizeof($data) == 0) {
+            throw new \Exception("getAllCid DB error", 500);
+        }
+        unset($ids);
+        $ids = array();
+        foreach ($data as $d) {
+            $ids[] = $d["id"];
+        }
+        return $ids;
+
+    }
 
     /** 对club表的票数数据进行更新
      * @param $club_id
@@ -18,18 +82,18 @@ class CvClub
      * @param string $table
      *
      */
-    public function voteUpdate($club_id,$database, $table = "cv_club")
+    public function voteUpdate($club_id, $database, $table = "cv_club")
     {
-        $affected = $database->update($table,[
-            "fav_num[+]"=>1
-        ],[
-            "AND"=>[
-                "id"=>$club_id,
-                "visible"=>1
+        $affected = $database->update($table, [
+            "fav_num[+]" => POINT
+        ], [
+            "AND" => [
+                "id" => $club_id,
+                "visible" => 1
             ]
         ]);
-        if(!is_numeric($affected)||$affected!=1){
-            throw new Exception("fav_num update error",500);
+        if (!is_numeric($affected) || $affected != 1) {
+            throw new \Exception("fav_num update error", 500);
         }
     }
 
@@ -62,7 +126,7 @@ class CvClub
         unset($clubObjs);
         $clubObjs = array();
         if (!is_array($data)) {
-            throw new Exception("searching DB error", 500);
+            throw new \Exception("searching DB error", 500);
         } elseif (sizeof($data) == 0) {
             return null;
         } else {
@@ -103,9 +167,9 @@ class CvClub
         ]);
 
         if (!is_array($data)) {
-            throw new Exception("gettingBaseDetails DB error", 500);
+            throw new \Exception("gettingBaseDetails DB error", 500);
         } elseif (sizeof($data) != 1) {
-            throw new Exception("clubInfo not found", 500);
+            throw new \Exception("clubInfo not found", 500);
         } else {
             return $data[0];
         }
@@ -133,9 +197,9 @@ class CvClub
         ]);
 
         if (!is_array($clubIdFav)) {
-            throw new Exception("RankAll DB error", 500);
+            throw new \Exception("RankAll DB error", 500);
         } elseif (sizeof($clubIdFav) == 0) {
-            throw new Exception("RankAllList not found", 500);
+            throw new \Exception("RankAllList not found", 500);
         } else {
             $rankAll = $this->rankInList($id, $clubIdFav);
             return $rankAll;
@@ -165,9 +229,9 @@ class CvClub
         ]);
 
         if (!is_array($clubIdFav)) {
-            throw new Exception("RankAll DB error", 500);
+            throw new \Exception("RankAll DB error", 500);
         } elseif (sizeof($clubIdFav) == 0) {
-            throw new Exception("RankAllList not found", 500);
+            throw new \Exception("RankAllList not found", 500);
         } else {
             $rankSch = $this->rankInList($id, $clubIdFav);
             return $rankSch;
@@ -205,7 +269,7 @@ class CvClub
         //for循环后没有找到这个club 找不到排名
 //        var_dump($clubIdFav);
         if ($rankNum == -1) {
-            throw new Exception("club in RankList not found", 500);
+            throw new \Exception("club in RankList not found", 500);
         } else {
             return $rankNum;
         }

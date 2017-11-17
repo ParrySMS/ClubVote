@@ -12,21 +12,22 @@ class TokenCheckPoint
 {
     private $database;
 
-    public function __invoke($request, $response, $next)
-    {
-        if (!$request->hasHeader('cookie')) {
-            $response = $next($request, $response);
-            $response->withStatus(412)->write('Precondition Failed');
-        }else{
-            $cookieArray = $request->getHeader('Cookie');
-            $token = isset($cookieArray["token"])?$cookieArray["token"]:null;
-            var_dump($cookieArray);
-            $response = $next($request, $response);
-
-        }
-
-        return $response;
-    }
+//      中间件
+//    public function __invoke($request, $response, $next)
+//    {
+//        if (!$request->hasHeader('cookie')) {
+//            $response = $next($request, $response);
+//            $response->withStatus(412)->write('Precondition Failed');
+//        }else{
+//            $cookieArray = $request->getHeader('Cookie');
+//            $token = isset($cookieArray["token"])?$cookieArray["token"]:null;
+//            var_dump($cookieArray);
+//            $response = $next($request, $response);
+//
+//        }
+//
+//        return $response;
+//    }
     /**
      * TokenCheckPoint constructor.
      */
@@ -68,7 +69,7 @@ class TokenCheckPoint
             if (!$match) {
                 throw new Exception('token to invalid 02', 406);
             }
-
+            //var_dump($tokenAr);
             return $token;
 
         }

@@ -11,76 +11,115 @@
 namespace classphp;
 class CvFav
 {
-    //時間鉴权
-    public function hasVoted($club_id, $user_id, $database, $table = "cv_fav")
+    //获取最新的投票人的头像 连表查询 默认6个
+    public function getAvators($club_id, $database, $num = null, $table = "cv_fav")
     {
-        $has = $database->has($table, [
-            "uid" => $user_id,
-            "cid" => $club_id,
-            "time[<>]" => [date("Y-m-d 00:00:00"), date("Y-m-d H:i;s")],
-            "visible" => 1
-        ]);
-        return $has;
+        $num = is_null($num) ? AVATORS_NUM : $num;
+        $data = $database->select($table, [
+            "[><]cv_user(u)" => ["uid" => "id"],
+        ], [
+            "cv_fav.uid",
+            "u.icon",
+        ],
+            [
+                "AND" => [
+                    "cv_fav.cid" => $club_id,
+                    "cv_fav.visible" => 1,
+                    "u.visible" => 1
+                ],
+                "ORDER" => [
+                    "cv_fav.time" => "DESC"
+                ],
+                "LIMIT" => 5*$num //考虑要去重 留多5倍数量
+            ]);;
 
-//        $data = $database->select($table, [
-//            "time"
-//        ], [
-//            "AND" => [
-//                "uid" => $user_id,
-//                "visible" => 1
-//            ]
-//            ,
-//            "ORDER" => [
-//                "time" => "DESC"
-//            ]
-//        ]);
-////      print_r($data);
-////    echo gettype($data);
-//        //数组空 == false 判断为真
-//        if ($data == false) {
-//            //查不到没发过问题
-//            return false;
-//        } else {
-//            //检查时间
-//            $latest_time = $data[0]["time"];//自取第一个最晚的时间
-//            $latest_date = date("Y-m-d", strtotime($latest_time));
-//            $now_date = date("Y-m-d", time());
-//            // var_dump($latest_date);
-//            // var_dump($now_date);
-//            if ($latest_date == $now_date) {
-//                //echo "true";
-//                //已经发过
-//                return true;
-//            } else {
-//                return false;
-//            }
-//
-//        }
+        //去重
+        $data_uni = array_unique($data, SORT_REGULAR);
+//         var_dump($data_uni);
+        //取若干个出来
+        unset($avators);
+        $avators = array();
+
+        foreach ($data_uni as $d) {
+            if(sizeof($avators)==$num){
+                break;
+            }
+            $avators[]=$d["icon"];
+        }
+        //var_dump($avators);
+        return $avators;
+
+    }
+
+//時間鉴权
+    public
+    function hasVoted($user_id, $club_id, $database, $table = "cv_fav")
+    {
+
+        $data = $database->select($table, [
+            "time"
+        ], [
+            "AND" => [
+                "uid" => $user_id,
+//                "cid" => $club_id,
+                "visible" => 1
+            ]
+            ,
+            "ORDER" => [
+                "time" => "DESC"
+            ]
+        ]);
+        //数组空 == false 判断为真
+        if ($data == false||sizeof($data)<FAV_LIMIT) {
+            //查不到没发过问题
+            return false;
+        } else {
+            //var_dump($data);
+            //检查时间
+                        //每天限制投票三次
+            $latest_time = $data[FAV_LIMIT-1]["time"];//自取第n-1个最新的时间
+            $latest_date = date("Y-m-d", strtotime($latest_time));
+            $now_date = date("Y-m-d", time());
+            // var_dump($latest_date);
+            // var_dump($now_date);
+            if ($latest_date == $now_date) {
+                //echo "true";
+                //已经发过
+
+                return true;
+            } else {
+                return false;
+            }
+
+        }
     }
 
     /**用userid 调用user表查找unionid 然后发向内部接口 判断是否已经关注
      * @param $user_id
      * @return bool
      */
-    public function hasFollowed($user_id,$database)
+    public
+    function hasFollowed($user_id, $database)
     {
         //user表 獲取unionid
         $user = new CvUser();
-        $unionid = $user->getUnionidByUserid($user_id,$database);
+        $unionid = $user->getUnionidByUserid($user_id, $database);
         //判断是否关注公众号
         $crypt = new ThinkCrypt();
-        $str = $crypt->encrypt("T@oKeLiZh!",'',0,0);
+        $str = $crypt->encrypt("T@oKeLiZh!", '', 0, 0);
         $url = "https://api.szu.me/api_com/weixin_sub/gx_sub.php?unionid=$unionid&str=$str";
-        $json_array = json_decode(https_request($url), true);
-       if (isset($json_array["subscribe"]) && $json_array["subscribe"] === 1) {
-           return true;
-       } else {
-           return false;
-       }
+        $json_array = json_decode($this->https_request($url), true);
+        if (isset($json_array["subscribe"]) && $json_array["subscribe"] == 1) {
+            return true;
+        } else {
+//            var_dump($json_array);
+            return false;
+        }
 
     }
 
-    public function vote($club_id, $user_id, $database, $msg = null, $table = "cv_fav")
+    public
+    function vote($club_id, $user_id, $database, $msg = null, $table = "cv_fav")
     {
 
 
@@ -95,7 +134,7 @@ class CvFav
             "visible" => 1
         ]);
         if (!is_numeric($insert_id) || $insert_id < 1) {
-            throw new Exception("voteLog insert error", 500);
+            throw new \Exception("voteLog insert error", 500);
         }
 
     }

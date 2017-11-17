@@ -2,6 +2,7 @@
 
 require 'vendor/autoload.php';
 
+
 require 'class/Crypt.php';
 require 'class/CvBottomPic.php';
 require 'class/Image.php';
@@ -13,14 +14,18 @@ require 'class/JsRetdata.class.php';
 require 'class/Json.php';
 require 'class/Sliders.php';
 require 'class/CvUser.php';
+require 'class/CvFav.php';
 require 'class/CvClub.php';
+require 'class/ClubList.php';
 require 'class/ThinkCrypt.php';
 require 'class/Medoo.php';
 
 require 'model/CvToken.php';
+require 'model/CvClubList.php';
 require 'model/CvSliders.php';
 require 'model/CvSearch.php';
 require 'model/CvJSSDK.php';
+require 'model/CvVote.php';
 require 'model/CvClubDetails.php';
 require 'model/Safe.php';
 require 'model/TokenCheckPoint.php';
@@ -41,10 +46,9 @@ $config = [
 
 $app = new \Slim\App($config);
 
-//todo: 进行投票行为记录 获取记录表 拿头像给回details
 
-//todo:鉴权 限制投票 时间 关注
-//todo:首页的分页
+
+//todo:投票限制和分数
 
 /*
  * get 请求
@@ -68,7 +72,6 @@ $app->get('/search', function ($request, $response) {
         return $response->withStatus(412)->write('Precondition Failed');
     } else {
         $token = $_COOKIE['token'];
-
         $content = isset($request->getQueryParams()["content"]) ? $request->getQueryParams()["content"] : null;
     }
     $database = new Medoo(array("database_name" => DATABASE_NAME));
@@ -80,6 +83,19 @@ $app->get('/search', function ($request, $response) {
 //社团相关路由组
 $app->group('/clubs', function () {
     //获取社团详情页（信息+点赞头像+底部图）
+    $this->get('/all', function ($request, $response) {
+        if (!$request->hasHeader('cookie') || !isset($_COOKIE['token'])) {
+            return $response->withStatus(412)->write('Precondition Failed');
+        } else {
+            $token = $_COOKIE['token'];
+            $database = new Medoo(array("database_name" => DATABASE_NAME));
+            $ids = isset($request->getQueryParams()["ids"]) ? $request->getQueryParams()["ids"] : array();
+            $cvClubList = new CvClubList($ids,$token,$database);
+            return $response->withStatus($cvClubList->getStatus());
+        }
+    });
+
+
     $this->get('/{id}', function ($request, $response) {
         if (!$request->hasHeader('cookie') || !isset($_COOKIE['token'])) {
             return $response->withStatus(412)->write('Precondition Failed');
@@ -87,15 +103,29 @@ $app->group('/clubs', function () {
             $token = $_COOKIE['token'];
             $route = $request->getAttribute('route');
             $id = ($route->getArgument('id') !== null) ? $route->getArgument('id') : null;
-
+            $avator_num = isset($request->getQueryParams()["a"]) ? $request->getQueryParams()["a"] : null;
+            $avator_num = is_numeric($avator_num)?$avator_num:null;
+            $id = is_numeric($id)?$id:null;
             $database = new Medoo(array("database_name" => DATABASE_NAME));
-            $cvClubDetails = new CvClubDetails($id, $token, $database);
+            $cvClubDetails = new CvClubDetails($id, $token,$avator_num, $database);
 
             return $response->withStatus($cvClubDetails->getStatus());
         }
     });
+    $this->patch('/{id}/vote', function ($request, $response) {
+        if (!$request->hasHeader('cookie') || !isset($_COOKIE['token'])) {
+            return $response->withStatus(412)->write('Precondition Failed');
+        } else {
+            $token = $_COOKIE['token'];
+            $route = $request->getAttribute('route');
+            $cid = ($route->getArgument('id') !== null) ? $route->getArgument('id') : null;
+            $database = new Medoo(array("database_name" => DATABASE_NAME));
+            $cvVote = new CvVote($token, $cid, $database);
+            $json = array('retcode' => $cvVote->getRetcode());
+            return $response->withJson($json, $cvVote->getStatus());
+        }
+    });
 });
-
 
 /*
  * post 请求
@@ -110,7 +140,7 @@ $app->post('/token', function ($request, $response, $args) {
     }
     $database = new Medoo(array("database_name" => DATABASE_NAME));
     $cvToken = new CvToken($code, $database);
-    setcookie("token", $cvToken->token,EXPIRES);
+    setcookie("token", $cvToken->token, EXPIRES);
     return $response->withStatus($cvToken->getStatus());
 });
 
@@ -120,7 +150,6 @@ $app->post('/sign', function ($request, $response, $args) {
     if (isset($request->getParsedBody()["url"])) {
         $url = $request->getParsedBody()["url"];
     }
-    $database = new Medoo(array("database_name" => DATABASE_NAME));
     $cvJssdk = new CvJSSDK($url);
     return $response->withStatus($cvJssdk->getStatus());
 });

@@ -8,7 +8,7 @@
  */
 
 namespace classphp;
-use Think\Exception;
+
 
 class CvUser
 {
@@ -31,7 +31,7 @@ class CvUser
             ]
         ]);
         if(!is_array($data)||sizeof($data)!=1){
-            throw new Exception("get unionid error",500);
+            throw new \Exception("get unionid error",500);
         }
         foreach ($data as $d){
             return $d["unionid"];
@@ -117,7 +117,7 @@ class CvUser
     public function getUseridByCreatingUser($info, $database, $table = "cv_user")
     {
         if (!is_array($info)) {
-            throw new Exception("type of info error in creating user", 500);
+            throw new \Exception("type of info error in creating user", 500);
         } else {
 
             $insert_id = $database->insert($table, [
@@ -136,7 +136,7 @@ class CvUser
             if (is_numeric($insert_id) && $insert_id != 0) {
                 return $insert_id;
             } else {
-                throw new Exception("creating user error", 500);
+                throw new \Exception("creating user error", 500);
             }
         }
     }

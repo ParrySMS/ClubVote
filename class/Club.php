@@ -27,11 +27,11 @@ class Club
 //     * @param $info
      * @param $photo
      */
-    public function __construct($id, $school, $club, $photo,$fav_num)
+    public function __construct($id, $school, $name, $photo,$fav_num)
     {
         $this->id = $id;
         $this->ascription = $school;
-        $this->name = $club;
+        $this->name = $name;
         $this->fav_num = $fav_num;
 //        $this->info = $info;
         $this->img_url = $photo;

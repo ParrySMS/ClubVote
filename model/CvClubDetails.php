@@ -10,6 +10,7 @@ class CvClubDetails
 {
     private $database;
     private $status = 200;
+    private $avator_num = AVATORS_NUM;
 
     /**
      * @return int
@@ -20,29 +21,47 @@ class CvClubDetails
     }
 
 
-    public function __construct($id, $token, $database)
+    public function __construct($id, $token,$avator_num ,$database)
     {
         $this->database = $database;
-        $this->init($id, $token);
+        $this->avator_num = $avator_num;
+        $this->init($id,$token);
     }
 
-    private function init($id, $token)
+    private function init($id,$token)
     {
-        $json = $this->clubDetails($id, $token);
+        $json = $this->clubDetails($id,$token);
         if (!is_null($json)) {
             print_r(json_encode($json));
         }
     }
 
-    private function clubDetails($id, $token)
+    private function clubDetails($id,$token)
     {
         try {
+            //安全检查
+            $safeObj = new Safe($id);
+            if ($safeObj->getStatus() == 200) {
+                $content = $safeObj->getStr();
+            } else {
+                $id = null;
+//                    $this->status = $safeObj->getStatus();
+                throw new Exception($safeObj->getMsg(), $safeObj->getStatus());
+            }
+
+            if(is_null($id)){
+                throw new Exception("club_id null or not number",400);
+            }
             $token = new TokenCheckPoint($token, $this->database);
             $cvClub = new classphp\CvClub();
+            $cvFav = new classphp\CvFav();
             $cvBottom = new classphp\CvBottomPic();
             unset($clubBase);
             //base 包含 school club fav_num info photo
             //返回 字串关联数组clubBase
+
+
+
             $clubBase = $cvClub->getBaseDetails($id, $this->database);
 //            var_dump($clubBase);
             $school = $clubBase["school"];
@@ -56,9 +75,9 @@ class CvClubDetails
             $schRank = $cvClub->getRankSch($id, $school, $this->database);
             unset($avatars,$sponsors);
             $sponsors = $cvBottom->getBottomObjs($school, $this->database);
-            //todo:  点赞头像(需要点赞记录表)
-            $avatars = array();
+            //点赞头像(需要点赞记录表)
 
+            $avatars =   $cvFav->getAvators($id,$this->database,$this->avator_num);
 //            $sponsors =array($sponsorGZH,$sponsorOne);
 
             //$id, $school, $club, $photo,$fav_num,$schRank, $totalRank, $desc, array $avatars, $sponsors

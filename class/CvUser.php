@@ -30,10 +30,10 @@ class CvUser
                 "visible" => 1
             ]
         ]);
-        if(!is_array($data)||sizeof($data)!=1){
-            throw new \Exception("get unionid error",500);
+        if (!is_array($data) || sizeof($data) != 1) {
+            throw new \Exception("get unionid error", 500);
         }
-        foreach ($data as $d){
+        foreach ($data as $d) {
             return $d["unionid"];
         }
 
@@ -105,6 +105,25 @@ class CvUser
             ]
         ]);
         return $has;
+    }
+
+    //todo:此方法暂时无用
+    /** 获取我的头像
+     * @param $user_id
+     * @param $database
+     * @param string $table
+     * @return null
+     */
+    public function getMyAvator($user_id, $database, $table = "cv_user")
+    {
+        $data = $database->get($table, ["icon"],
+            [
+                "AND" => [
+                    "id" => $user_id,
+                    "visivle" => 1
+                ]
+            ]);
+        return $data === false ? null : $data;
     }
 
     /**

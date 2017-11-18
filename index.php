@@ -46,8 +46,6 @@ $config = [
 
 $app = new \Slim\App($config);
 
-
-
 //todo:投票限制和分数
 
 /*

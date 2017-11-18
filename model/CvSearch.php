@@ -41,7 +41,18 @@ class CvSearch
             //执行token检查
             $token = new TokenCheckPoint($token, $this->database);
             //对club表进行搜索
-            $cvClub = new CvClub();
+            $cvClub = new classphp\CvClub();
+            //安全检查
+            $safeObj = new Safe($content);
+            if ($safeObj->getStatus() == 200) {
+                $content = $safeObj->getStr();
+            } else {
+                $content = null;
+//                    $this->status = $safeObj->getStatus();
+                throw new Exception($safeObj->getMsg(), $safeObj->getStatus());
+            }
+
+
             $clubObjs = $cvClub->search($content, $this->database);
             //封装
             $retdata = new classphp\Clubs($clubObjs);

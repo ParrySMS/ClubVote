@@ -6,8 +6,38 @@
  * Date: 2017-11-2
  * Time: 0:30
  */
+
+namespace classphp;
+
+
 class CvUser
 {
+
+    /** 获取用户unionid
+     * @param $user_id
+     * @param $database
+     * @param string $table
+     * @return mixed
+     * @throws Exception
+     */
+    public function getUnionidByUserid($user_id, $database, $table = "cv_user")
+    {
+        $data = $database->select($table, [
+            "unionid"
+        ], [
+            "AND" => [
+                "id" => $user_id,
+                "visible" => 1
+            ]
+        ]);
+        if (!is_array($data) || sizeof($data) != 1) {
+            throw new \Exception("get unionid error", 500);
+        }
+        foreach ($data as $d) {
+            return $d["unionid"];
+        }
+
+    }
 
     /**
      * 以openid换取user_id
@@ -30,9 +60,9 @@ class CvUser
         ]);
 //        echo "getuserid";
 //        print_r($data);
-        if ($data == null) {
-            $user_id = $this->getUseridByCreatingUser($database, $openid);
-            return $user_id;
+        if ($data === null) {
+//            $user_id = $this->getUseridByCreatingUser($database, $openid);
+            return null;
         } else {
             foreach ($data as $d) {
                 //检验是否被封号
@@ -77,6 +107,25 @@ class CvUser
         return $has;
     }
 
+    //todo:此方法暂时无用
+    /** 获取我的头像
+     * @param $user_id
+     * @param $database
+     * @param string $table
+     * @return null
+     */
+    public function getMyAvator($user_id, $database, $table = "cv_user")
+    {
+        $data = $database->get($table, ["icon"],
+            [
+                "AND" => [
+                    "id" => $user_id,
+                    "visivle" => 1
+                ]
+            ]);
+        return $data === false ? null : $data;
+    }
+
     /**
      * 以openid 创建新用户 并返回user_id
      * @param object $database 数据库
@@ -84,25 +133,44 @@ class CvUser
      * @return int $user_id 用户id null 报错
      * @author Parry < yh@szer.me >
      */
-    private function getUseridByCreatingUser($database, $openid, $table = "cv_user")
+    public function getUseridByCreatingUser($info, $database, $table = "cv_user")
     {
-
-        $insert_id = $database->insert($table, [
-            "openid" => $openid,
-            "time" => date("Y-m-d H:i:s"),
-            "visible" => 1
-        ]);
-        if (is_numeric($insert_id) && $insert_id != 0) {
-            return $insert_id;
+        if (!is_array($info)) {
+            throw new \Exception("type of info error in creating user", 500);
         } else {
-            return null;
-        }
 
+            $insert_id = $database->insert($table, [
+                "openid" => $info["openid"],
+                "nickname" => $info["nickname"],
+                "sex" => $info["sex"],
+                "country" => $info["country"],
+                "province" => $info["province"],
+                "city" => $info["city"],
+                "icon" => $info["headimgurl"],
+                "unionid" => $info["unionid"],
+                "time" => date("Y-m-d H:i:s"),
+                "visible" => 1
+            ]);
+
+            if (is_numeric($insert_id) && $insert_id != 0) {
+                return $insert_id;
+            } else {
+                throw new \Exception("creating user error", 500);
+            }
+        }
     }
 
-
-    public function isMatchUidOid($user_id, $openid,$database,$table="cv_user")
+    /**判断userid和openid是否匹配
+     * @param $user_id
+     * @param $openid
+     * @param $database
+     * @param string $table
+     * @return mixed
+     */
+    public function isMatchUidOid($user_id, $openid, $database, $table = "cv_user")
     {
+        //test
+        // echo "$user_id###$openid";
         $has = $database->has($table, [
             "AND" => [
                 "id" => $user_id,
@@ -113,5 +181,6 @@ class CvUser
         return $has;
 
     }
+
 
 }

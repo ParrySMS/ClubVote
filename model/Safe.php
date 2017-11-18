@@ -4,10 +4,18 @@
 // 摘自 http://www.jb51.net/article/30079.htm，并稍作了修改
 class Safe
 {
-    private $status=200;
+    private $status = 200;
     private $msg;
     private $str;
+    private $ar = array();
 
+    /**
+     * @return array|int|string
+     */
+    public function getAr()
+    {
+        return $this->ar;
+    }
     /**
      * @return mixed
      */
@@ -34,16 +42,20 @@ class Safe
 
     function __construct($str)
     {
-        // 判断magic_quotes_gpc状态
-        if (@get_magic_quotes_gpc()) {
-            $_GET = $this->sec($_GET);
-            $_POST = $this->sec($_POST);
-            $_COOKIE = $this->sec($_COOKIE);
-            $_FILES =$this-> sec($_FILES);
-        }
+        if (is_array($str)) {
+            $this->ar = $this->sec($str);
+        } else {
+            // 判断magic_quotes_gpc状态
+            if (@get_magic_quotes_gpc()) {
+                $_GET = $this->sec($_GET);
+                $_POST = $this->sec($_POST);
+                $_COOKIE = $this->sec($_COOKIE);
+                $_FILES = $this->sec($_FILES);
+            }
 
-        $_SERVER =$this-> sec($_SERVER);
-        $this->str =$this->safe_check($str);
+            $_SERVER = $this->sec($_SERVER);
+            $this->str = $this->safe_check($str);
+        }
     }
 
 // 字符串过滤函数
@@ -93,10 +105,10 @@ class Safe
     function str_check($str)
     {
         if ($this->inject_check($str)) {
-           $this->msg="illegal argument exception";
-           $this->status=400;
+            $this->msg = "illegal argument exception";
+            $this->status = 400;
 //           throw new Exception("illegal argument exception");
-           // die ('Illegal Argument Exception');
+            // die ('Illegal Argument Exception');
         }
         //注入判断
         $str = htmlspecialchars($str);
@@ -120,12 +132,12 @@ class Safe
     function post_check($str, $min, $max)
     {
         if (isset ($min) && mb_strlen($str) < $min) {
-            $this->msg="min: $min byte";
-           $this->status=400;
+            $this->msg = "min: $min byte";
+            $this->status = 400;
             //die ("min: $min byte");
         } else if (isset ($max) && mb_strlen($str) > $max) {
-            $this->msg="max: $max byte";
-            $this->status=400;
+            $this->msg = "max: $max byte";
+            $this->status = 400;
             //die ("max: $max byte");
         }
         return stripslashes_array($str);

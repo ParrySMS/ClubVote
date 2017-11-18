@@ -11,34 +11,31 @@ namespace classphp;
 
 class ClubDetails extends Club
 {
+    public $schRank;
+    public $totalRank;
+    public $desc;
     //头像
-    public $icons=array();
+    public $avatars = array();
     //底部图
-    public $bottomPic=array();
-
-    public $rankSch;
-    public $rankAll;
+    public $sponsors;
 
     /**
      * ClubDetails constructor.
-     * @param $id
-     * @param $school
-     * @param $club
-     * @param $photo
-     * @param null $fav_num
-     * @param null $info
-     * @param $rankSch
-     * @param $rankAll
-     * @param array $icons
-     * @param array $bottomPic
+     * @param $schRank
+     * @param $totalRank
+     * @param $desc
+     * @param array $avatars
+     * @param $fav_num
+     * @param $sponsors
      */
-    public function __construct($id, $school, $club, $photo,$fav_num, $info,$rankSch,$rankAll,array $icons, array $bottomPic)
+    public function __construct($id, $school, $club, $photo,$fav_num,$schRank, $totalRank, $desc, array $avatars, $sponsors)
     {
-        parent::__construct($id, $school, $club, $photo,$fav_num, $info);
-        $this->rankSch = $rankSch;
-        $this->rankAll = $rankAll;
-        $this->icons = $icons;
-        $this->bottomPic = $bottomPic;
+        parent::__construct($id, $school, $club, $photo,$fav_num);
+        $this->schRank = $schRank;
+        $this->totalRank = $totalRank;
+        $this->desc = $desc;
+        $this->avatars = $avatars;
+        $this->sponsors = $sponsors;
     }
 
 

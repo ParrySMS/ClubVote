@@ -12,29 +12,29 @@ namespace classphp;
 class Club
 {
     public $id;
-    public $school;
-    public $club;
+    public $ascription; //归属 指的是学校
+    public $name; //社团名
+    public $img_url;
     public $fav_num;
-    public $info;
-    public $photo;
+   // public $info;
 
     /**
      * Club constructor.
      * @param $id
      * @param $school
      * @param $club
-     * @param $fav_num
-     * @param $info
+//     * @param $fav_num
+//     * @param $info
      * @param $photo
      */
-    public function __construct($id, $school, $club, $photo,$fav_num=null, $info=null)
+    public function __construct($id, $school, $name, $photo,$fav_num)
     {
         $this->id = $id;
-        $this->school = $school;
-        $this->club = $club;
+        $this->ascription = $school;
+        $this->name = $name;
         $this->fav_num = $fav_num;
-        $this->info = $info;
-        $this->photo = $photo;
+//        $this->info = $info;
+        $this->img_url = $photo;
     }
 
 

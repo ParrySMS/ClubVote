@@ -2,7 +2,7 @@
 
 require 'vendor/autoload.php';
 
-
+//应该把下面的内容通过命名空间放进autoload里面 不需要自己一个个require
 require 'class/Crypt.php';
 require 'class/CvBottomPic.php';
 require 'class/Image.php';
@@ -46,7 +46,6 @@ $config = [
 
 $app = new \Slim\App($config);
 
-//todo:投票限制和分数
 
 /*
  * get 请求
